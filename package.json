@@ -1,0 +1,83 @@
+{
+  "name": "coffeescript-outline",
+  "displayName": "Coffeescript Outline",
+  "description": "A simple extension that shows the symbols and outlines for a CoffeeScript file.",
+  "publisher": "ignorantshr",
+  "version": "1.0.0",
+  "author": {
+    "name": "ignorantshr"
+  },
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ignorantshr/vscode-coffeescript-outline"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "keywords": [
+    "coffeescript",
+    "CoffeeScript",
+    "coffeescript outline",
+    "CoffeeScript Outline",
+    "coffee",
+    "outline"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:coffeescript"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "coffeescript",
+        "aliases": [
+          "CoffeeScript",
+          "coffeescript",
+          "coffee"
+        ],
+        "extensions": [
+          ".coffee"
+        ]
+      }
+    ],
+    "documentSymbolProviders": [
+      {
+        "language": "coffeescript",
+        "provider": {
+          "type": "class",
+          "name": "CoffeeScriptDocumentSymbolProvider"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "CoffeeScript Outline",
+      "properties": {
+        "coffeeOutline.enableCache": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable caching for CoffeeScript outline"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.96.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.16.0"
+  },
+  "dependencies": {
+    "coffeescript": "^2.7.0"
+  }
+}
