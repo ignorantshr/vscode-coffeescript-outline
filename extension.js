@@ -9,10 +9,12 @@ const {
 
 class CoffeeScriptDocumentSymbolProvider {
   constructor() {
-    let enabled = vscode.workspace
+    setEnableCache(
+      vscode.workspace.getConfiguration("coffeeOutline").get("enableCache")
+    );
+    this.enabledInnerMethod = vscode.workspace
       .getConfiguration("coffeeOutline")
-      .get("enableCache");
-    setEnableCache(enabled);
+      .get("enableInnerMethod");
   }
 
   toggleCache(enabled) {
@@ -22,6 +24,14 @@ class CoffeeScriptDocumentSymbolProvider {
     }
     vscode.window.showInformationMessage(
       `CoffeeScript Outline cache ${enabled ? "enabled" : "disabled"}`
+    );
+  }
+
+  toggleInnerMethod(enabled) {
+    this.enabledInnerMethod = enabled;
+    clearCache(); // regenerate symbols
+    vscode.window.showInformationMessage(
+      `CoffeeScript Outline innerMethod ${enabled ? "enabled" : "disabled"}`
     );
   }
 
@@ -38,7 +48,7 @@ class CoffeeScriptDocumentSymbolProvider {
 
       try {
         const ast = coffee.nodes(text);
-        console.log(ast);
+        // console.log(ast);
         this.parseNode(ast, symbols, document);
       } catch (error) {
         console.error("Coffeescript Outline parse error:", error);
@@ -86,10 +96,57 @@ class CoffeeScriptDocumentSymbolProvider {
         break;
 
       case "Value": // expression
-        if (node.base?.objects) {
-          node.base.objects.forEach((obj) => {
-            this.parseNode(obj, symbols, document, parent);
-          });
+        switch (node.base.constructor.name) {
+          case "Call":
+            this.parseNode(node.base, symbols, document, parent);
+            break;
+
+          default:
+            if (node.base?.objects) {
+              node.base.objects.forEach((obj) => {
+                this.parseNode(obj, symbols, document, parent);
+              });
+            }
+            break;
+        }
+        break;
+
+      case "Call":
+        if (!this.enabledInnerMethod) {
+          return;
+        }
+
+        let method = node.variable.base.value;
+        if (node.variable.this) {
+          method = "@";
+        }
+
+        for (let property of node.variable.properties) {
+          switch (property.constructor.name) {
+            case "Access":
+              if (method === "@") {
+                method += property.name.value;
+              } else {
+                method += "." + property.name.value;
+              }
+              break;
+
+            default:
+              break;
+          }
+        }
+
+        const methodSymbol = new vscode.DocumentSymbol(
+          method,
+          "",
+          vscode.SymbolKind.Method,
+          this.getRange(node, document),
+          this.getRange(node.variable, document)
+        );
+        if (parent) {
+          parent.children.push(methodSymbol);
+        } else {
+          symbols.push(methodSymbol);
         }
         break;
 
@@ -202,6 +259,14 @@ function activate(context) {
       if (e.affectsConfiguration("coffeeOutline.enableCache")) {
         provider.toggleCache(
           vscode.workspace.getConfiguration("coffeeOutline").get("enableCache")
+        );
+      }
+
+      if (e.affectsConfiguration("coffeeOutline.enableInnerMethod")) {
+        provider.toggleInnerMethod(
+          vscode.workspace
+            .getConfiguration("coffeeOutline")
+            .get("enableInnerMethod")
         );
       }
     })
