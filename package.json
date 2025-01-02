@@ -3,7 +3,7 @@
   "displayName": "Coffeescript Outline",
   "description": "A simple extension that shows the symbols and outlines for a CoffeeScript file.",
   "publisher": "ignorantshr",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "ignorantshr"
   },

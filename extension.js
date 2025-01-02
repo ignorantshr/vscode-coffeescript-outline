@@ -118,12 +118,39 @@ class CoffeeScriptDocumentSymbolProvider {
           }
         } else {
           // 变量
-          let value = node.variable.base.value;
+          let name = node.variable.base.value;
           if (node.variable.this) {
-            value = "@" + node.variable.properties[0].name.value;
+            name = "@";
           }
+
+          for (let property of node.variable.properties) {
+            switch (property.constructor.name) {
+              case "Access":
+                if (name === "@") {
+                  name += property.name.value;
+                } else {
+                  name += "." + property.name.value;
+                }
+                break;
+
+              case "Index":
+                let base = "[" + property.index.base.value;
+                for (let access of property.index.properties) {
+                  if (access.constructor.name === "Access") {
+                    base += "." + access.name.value;
+                  }
+                }
+                base += "]";
+                name += base;
+                break;
+
+              default:
+                break;
+            }
+          }
+
           const propertySymbol = new vscode.DocumentSymbol(
-            value,
+            name,
             "",
             vscode.SymbolKind.Variable,
             this.getRange(node, document),
